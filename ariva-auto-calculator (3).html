@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#fcfbff">
+  <meta name="description" content="Калькулятор стоимости автомобиля из Китая с учётом доставки, перевода и растаможки в Беларуси.">
+  <title>Калькулятор стоимости автомобиля — ARIVA</title>
+  <style>
+    :root {
+      --ink: #19263d;
+      --muted: #737c8e;
+      --light-muted: #9ca3b3;
+      --violet: #6950f3;
+      --violet-dark: #5841e1;
+      --violet-soft: #f3f0ff;
+      --stroke: #e8e6f0;
+      --surface: #ffffff;
+      --page: #fcfbff;
+      --radius: 22px;
+      --shadow: 0 15px 52px rgba(37, 29, 81, .045);
+      --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--page); font-family: var(--font); color: var(--ink); }
+    input, button { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(1220px, calc(100% - 64px)); margin: 0 auto; }
+    .topbar { background: rgba(255, 255, 255, .84); }
+    .topbar-inner { height: 96px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--stroke); }
+    .brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; color: var(--ink); }
+    .brand-logo { display: block; width: 225px; height: auto; flex: none; }
+    .topbar-label { font-size: 11px; letter-spacing: .16em; font-weight: 700; color: #8e8aa4; text-transform: uppercase; }
+    .intro { padding: 61px 0 39px; }
+    .eyebrow { display: flex; gap: 12px; align-items: center; color: var(--violet); font-size: 11px; letter-spacing: .15em; text-transform: uppercase; font-weight: 750; }
+    .eyebrow::before { content: ""; width: 25px; height: 2px; border-radius: 1px; background: var(--violet); }
+    h1 { max-width: 860px; font-size: clamp(36px, 4.3vw, 60px); font-weight: 580; letter-spacing: -.053em; line-height: 1.12; margin: 23px 0 17px; }
+    h1 span { color: var(--violet); }
+    .intro p { color: #6e7889; line-height: 1.7; max-width: 580px; margin: 0; font-size: 15px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(340px, .82fr); gap: 24px; align-items: start; padding-bottom: 22px; }
+    .panel { border: 1px solid var(--stroke); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); min-width: 0; }
+    .form-panel { padding: 32px; }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
+    .section-heading h2 { font-size: 21px; font-weight: 630; letter-spacing: -.03em; margin: 0; }
+    .section-number { font-size: 12px; font-weight: 720; letter-spacing: .04em; color: #aaa0df; }
+    .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 18px; row-gap: 23px; }
+    .field { min-width: 0; }
+    .field.field-wide { grid-column: 1/-1; }
+    .field-label { display: block; margin-bottom: 10px; color: var(--ink); font-size: 14px; font-weight: 610; line-height: 1.5; }
+    .field-hint { margin: 8px 1px 0; font-size: 12px; color: #929aaa; line-height: 1.5; }
+    .input-wrap { position: relative; }
+    .number-input { display: block; width: 100%; min-width: 0; height: 62px; padding: 0 80px 0 17px; background: #fff; border-radius: 13px; border: 1px solid #dedde9; font-size: 19px; color: var(--ink); font-weight: 560; letter-spacing: -.015em; outline: none; transition: border-color .17s ease, box-shadow .17s ease; font-variant-numeric: tabular-nums; }
+    .number-input::placeholder { color: #c2c5d0; font-weight: 420; }
+    .number-input:hover { border-color: #c9c2e8; }
+    .number-input:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(105, 80, 243, .085); }
+    .unit { position: absolute; right: 17px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #9087b4; font-size: 12px; font-weight: 760; letter-spacing: .04em; }
+    .divider { border: 0; margin: 30px 0; height: 1px; background: var(--stroke); }
+    .customs-header { margin-bottom: 18px; }
+    .customs-subtitle { font-size: 13px; line-height: 1.6; color: #8b92a3; margin: -7px 0 24px; }
+    fieldset { border: 0; padding: 0; margin: 0 0 23px; min-width: 0; }
+    legend { padding: 0; }
+    .age-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+    .choice { position: relative; display: block; cursor: pointer; }
+    .choice input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .choice-body { display: flex; align-items: center; justify-content: center; min-height: 55px; padding: 9px 8px; border: 1px solid var(--stroke); border-radius: 12px; color: #6a7183; background: #fff; font-size: 13px; font-weight: 540; transition: .17s; text-align: center; }
+    .choice:hover .choice-body { border-color: #c7bdf5; }
+    .choice input:checked + .choice-body { background: var(--violet-soft); color: var(--violet); border-color: var(--violet); box-shadow: inset 0 0 0 1px var(--violet); font-weight: 660; }
+    .choice input:focus-visible + .choice-body { outline: 3px solid #d9d1ff; outline-offset: 2px; }
+    .engine-list { display: grid; gap: 9px; }
+    .engine-choice .choice-body { padding: 14px 17px; min-height: 70px; justify-content: space-between; gap: 12px; text-align: left; }
+    .engine-copy { display: grid; gap: 3px; }
+    .engine-title { font-weight: 650; color: var(--ink); font-size: 14px; }
+    .engine-desc { font-weight: 420; color: #8d96a5; font-size: 12px; line-height: 1.45; }
+    .engine-choice input:checked + .choice-body .engine-title { color: var(--violet); }
+    .engine-check { width: 20px; height: 20px; border: 1.5px solid #d0cddb; border-radius: 50%; flex: 0 0 auto; }
+    .engine-choice input:checked + .choice-body .engine-check { border: 6px solid var(--violet); background: #fff; }
+    .volume-field { margin: 0 0 23px; }
+    [hidden] { display: none !important; }
+    .benefit { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 17px 18px; border: 1px solid #e4dcff; border-radius: 14px; background: linear-gradient(115deg, #f6f4ff, #fff); cursor: pointer; }
+    .benefit-copy { display: grid; gap: 4px; }
+    .benefit-title { font-size: 14px; font-weight: 650; color: var(--ink); }
+    .benefit-desc { color: #928ab6; font-size: 12px; }
+    .benefit-options { display: grid; gap: 10px; }
+    .benefit.is-disabled { opacity: .5; cursor: not-allowed; border-color: var(--stroke); background: #f7f7fa; }
+    .toggle { position: relative; display: inline-flex; flex: none; }
+    .toggle input { position: absolute; opacity: 0; }
+    .toggle-track { width: 46px; height: 27px; background: #d9d7e4; border-radius: 30px; position: relative; transition: .18s; }
+    .toggle-track::after { content: ""; width: 19px; height: 19px; position: absolute; left: 4px; top: 4px; border-radius: 50%; background: white; box-shadow: 0 1px 5px #0002; transition: .18s; }
+    .toggle input:checked + .toggle-track { background: var(--violet); }
+    .toggle input:checked + .toggle-track::after { transform: translateX(19px); }
+    .toggle input:focus-visible + .toggle-track { outline: 3px solid #c8bfff; outline-offset: 3px; }
+    .customs-details { margin-top: 21px; border: 1px solid #ebe9f3; border-radius: 14px; overflow: hidden; }
+    .customs-details-title { padding: 16px 17px; display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #fbfaff; font-weight: 670; font-size: 13px; }
+    .customs-detail-line { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 17px; min-height: 39px; border-bottom: 1px solid #f0eff6; color: #7a8292; font-size: 12px; }
+    .customs-detail-line:last-child { border-bottom: 0; }
+    .customs-detail-line strong { font-weight: 640; color: #394358; text-align: right; font-variant-numeric: tabular-nums; }
+    .customs-detail-line.emphasis { margin: 0; padding: 0 17px; min-height: 56px; background: #faf9ff; color: var(--ink); font-weight: 650; font-size: 13px; }
+    .customs-detail-line.emphasis strong { font-size: 16px; color: var(--violet); }
+    .customs-detail-byn { display: block; font-size: 11px; font-weight: 430; color: #9da1af; text-align: right; margin-top: 3px; }
+    .final-field { margin-top: 0; }
+    .form-end { display: flex; justify-content: flex-end; margin-top: 22px; }
+    .reset-btn { padding: 8px 0; border: 0; background: none; color: #9696a7; font-size: 12px; font-weight: 600; }
+    .reset-btn:hover { color: var(--violet); }
+    .result-panel { position: sticky; top: 24px; overflow: hidden; padding: 28px; background: linear-gradient(148deg, #f4f1ff 0%, #fff 43%, #fff 100%); }
+    .result-overline { display: block; color: var(--violet); font-size: 10px; font-weight: 800; letter-spacing: .18em; margin-bottom: 10px; }
+    .result-panel h2 { font-size: 25px; font-weight: 620; letter-spacing: -.04em; line-height: 1.2; margin: 0 0 27px; }
+    .result-line { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; padding: 15px 0; border-bottom: 1px solid #ebe9f2; }
+    .result-line span { font-size: 13px; color: #747c8e; line-height: 1.45; }
+    .result-line small { display: block; color: #a0a3b0; margin-top: 4px; font-size: 11px; line-height: 1.5; }
+    .result-line strong { font-size: 15px; font-weight: 680; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .result-total { margin-top: 24px; background: var(--violet); border-radius: 17px; color: #fff; padding: 21px 19px 23px; }
+    .result-total-label { font-size: 14px; font-weight: 650; }
+    .result-total-amount { display: block; margin-top: 8px; font-size: clamp(28px, 2.7vw, 35px); line-height: 1.2; font-weight: 670; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+    .result-total-note { display: block; margin-top: 8px; font-size: 11px; line-height: 1.5; color: #ddd6ff; }
+    .disclaimer { margin: 16px 2px 0; color: #a0a4b2; font-size: 11px; line-height: 1.7; }
+    .rates-section { margin: 0 0 70px; padding: 18px 22px; border-radius: 16px; border: 1px solid var(--stroke); background: rgba(255,255,255,.88); }
+    .rates-header { display: flex; justify-content: space-between; gap: 20px; align-items: center; flex-wrap: wrap; }
+    .rates-label { color: #888fa1; font-size: 12px; font-weight: 600; }
+    .rates-label em { display: block; margin-top: 3px; font-style: normal; font-size: 11px; font-weight: 440; color: #aaaab6; }
+    .rates-right { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .rate { color: #737d90; font-size: 12px; }
+    .rate b { margin-left: 5px; color: #28364d; font-size: 13px; font-variant-numeric: tabular-nums; }
+    .rates-link { background: none; border: none; padding: 5px 0; color: var(--violet); font-size: 12px; font-weight: 630; text-decoration: underline; text-decoration-color: #c4baf9; text-underline-offset: 4px; }
+    .manual-rates { border-top: 1px solid var(--stroke); padding-top: 17px; margin-top: 17px; }
+    .manual-rates p { font-size: 12px; line-height: 1.5; color: #868e9e; margin: 0 0 12px; }
+    .manual-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
+    .manual-grid label { font-size: 12px; font-weight: 630; color: #566073; display: block; margin-bottom: 7px; }
+    .manual-grid input { width: 100%; border: 1px solid var(--stroke); border-radius: 10px; height: 42px; padding: 0 11px; font-size: 14px; color: var(--ink); outline: none; }
+    .manual-grid input:focus { border-color: var(--violet); }
+    .manual-grid button { height: 42px; padding: 0 14px; border: 0; border-radius: 10px; color: white; background: var(--violet); font-size: 12px; font-weight: 630; }
+    .rate-feedback { font-size: 12px; margin: 10px 0 0; color: #a84e4e; }
+    @media (max-width: 1060px) {
+      .layout { grid-template-columns: minmax(0, 1.2fr) minmax(300px, .85fr); gap: 16px; }
+      .form-panel { padding: 24px; }
+      .result-panel { padding: 22px; }
+    }
+    @media (max-width: 840px) {
+      .shell { width: min(720px, calc(100% - 40px)); }
+      .layout { grid-template-columns: 1fr; }
+      .result-panel { position: static; }
+      .result-panel h2 { margin-bottom: 18px; }
+      .intro { padding-top: 45px; }
+    }
+    @media (max-width: 540px) {
+      .shell { width: calc(100% - 30px); }
+      .topbar-inner { height: 79px; }
+      .brand-logo { width: 185px; }
+      .topbar-label { display: none; }
+      .intro { padding: 43px 0 27px; }
+      h1 { font-size: 38px; margin-top: 20px; }
+      .intro p { font-size: 14px; line-height: 1.7; }
+      .form-panel { padding: 21px 17px; }
+      .section-heading h2 { font-size: 20px; }
+      .field-grid { grid-template-columns: 1fr; row-gap: 21px; }
+      .number-input { height: 59px; }
+      .age-grid { gap: 6px; }
+      .choice-body { font-size: 12px; padding: 8px 3px; min-height: 56px; }
+      .engine-choice .choice-body { padding: 13px 12px; }
+      .engine-title { font-size: 13px; }
+      .engine-desc { font-size: 11px; }
+      .rates-section { padding: 16px; }
+      .rates-header { gap: 12px; }
+      .rates-right { gap: 15px; }
+      .manual-grid { grid-template-columns: 1fr 1fr; }
+      .manual-grid button { grid-column: 1/-1; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <div class="brand" aria-label="ARIVA">
+        <svg class="brand-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 342 78" fill="none" aria-hidden="true" focusable="false">
+         <title>ARIVA — gradient wordmark</title>
+         <desc>Editable vector source. Separate symbol and lettering groups. Transparent background; all letters are vector paths, no external fonts.</desc>
+         <defs>
+          <linearGradient id="wordmark-gradient" x1="92" y1="24" x2="330" y2="62" gradientUnits="userSpaceOnUse">
+           <stop stop-color="#252738"/><stop offset=".48" stop-color="#403852"/><stop offset="1" stop-color="#7860CE"/>
+          </linearGradient>
+          <linearGradient id="symbol-gradient" x1="17" y1="13" x2="57" y2="65" gradientUnits="userSpaceOnUse">
+           <stop stop-color="#242635"/><stop offset="1" stop-color="#5E4C8D"/>
+          </linearGradient>
+         </defs>
+         <g id="ariva-symbol" fill="url(#symbol-gradient)">
+          <path d="M30 5 23 18 49 66H62L30 5Z"/>
+          <path d="M3 66H16C18 53 26 45 35 43 19 43 9 52 3 66Z"/>
+         </g>
+         <g id="ariva-wordmark" fill="url(#wordmark-gradient)">
+          <path id="letter-a-first" fill-rule="evenodd" d="M91 58 113 20H121L143 58H135L129.5 48H104.5L99 58H91ZM108 42H126L117 26 108 42Z"/>
+          <path id="letter-r" fill-rule="evenodd" d="M157 58V20H182C194 20 201 24.5 201 32.5 201 38.5 197 42.5 190 44L204 58H194L181 45H164V58H157ZM164 39H181C189.5 39 194 37 194 32.5S189.5 26 181 26H164V39Z"/>
+          <path id="letter-i" d="M219 20H226V58H219Z"/>
+          <path id="letter-v" d="M239 20H247L264 51 281 20H289L268 58H260L239 20Z"/>
+          <path id="letter-a-last" fill-rule="evenodd" d="M290 58 312 20H320L342 58H334L328.5 48H303.5L298 58H290ZM307 42H325L316 26 307 42Z"/>
+         </g>
+        </svg>
+        
+      </div>
+      <div class="topbar-label">Калькулятор стоимости</div>
+    </div>
+  </header>
+  <main class="shell">
+    <section class="intro">
+      <div class="eyebrow">Расчёт стоимости</div>
+      <h1>Стоимость автомобиля<br><span>из Китая в Беларусь</span></h1>
+      <p>Укажите стоимость автомобиля и расходы. Калькулятор рассчитает растаможку и общую сумму в долларах США.</p>
+    </section>
+    <div class="layout">
+      <section class="panel form-panel" aria-labelledby="expense-title">
+        <div class="section-heading"><h2 id="expense-title">Расходы на автомобиль</h2><span class="section-number">01–04</span></div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="car-price" class="field-label">01. Сам автомобиль</label>
+            <div class="input-wrap"><input class="number-input" id="car-price" inputmode="decimal" type="text" autocomplete="off" placeholder="20 000"><span class="unit">USD</span></div>
+          </div>
+          <div class="field">
+            <label for="china-costs" class="field-label">02. Расходы по Китаю</label>
+            <div class="input-wrap"><input class="number-input" id="china-costs" inputmode="decimal" type="text" autocomplete="off" placeholder="1 500"><span class="unit">USD</span></div>
+          </div>
+          <div class="field">
+            <label for="khorgos-delivery" class="field-label">03. Доставка Хоргос — Минск</label>
+            <div class="input-wrap"><input class="number-input" id="khorgos-delivery" inputmode="decimal" type="text" autocomplete="off" placeholder="1 800"><span class="unit">USD</span></div>
+          </div>
+          <div class="field">
+            <label for="transfer-percent" class="field-label">04. Процент за перевод</label>
+            <div class="input-wrap"><input class="number-input" id="transfer-percent" inputmode="decimal" type="text" autocomplete="off" placeholder="2,5"><span class="unit">%</span></div>
+            <p class="field-hint">От суммы автомобиля, расходов по Китаю и доставки Хоргос — Минск.</p>
+          </div>
+        </div>
+        <hr class="divider">
+        <div class="section-heading customs-header"><h2>05. Растаможка</h2><span class="section-number">BY</span></div>
+        <p class="customs-subtitle">Стоимость автомобиля берётся из первого поля. Расчёт по правилам из предоставленного калькулятора.</p>
+        <fieldset>
+          <legend class="field-label">Возраст автомобиля</legend>
+          <div class="age-grid">
+            <label class="choice"><input type="radio" name="age" value="under-3" checked><span class="choice-body">До 3 лет</span></label>
+            <label class="choice"><input type="radio" name="age" value="3-5"><span class="choice-body">3–5 лет</span></label>
+            <label class="choice"><input type="radio" name="age" value="over-5"><span class="choice-body">Больше 5 лет</span></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="field-label">Тип двигателя</legend>
+          <div class="engine-list">
+            <label class="choice engine-choice"><input type="radio" name="engine" value="ice" checked><span class="choice-body"><span class="engine-copy"><span class="engine-title">ДВС или параллельный гибрид</span><span class="engine-desc">Бензин, дизель или гибрид с приводом от ДВС</span></span><span class="engine-check"></span></span></label>
+            <label class="choice engine-choice"><input type="radio" name="engine" value="electric"><span class="choice-body"><span class="engine-copy"><span class="engine-title">Электро</span><span class="engine-desc">Полностью электрический автомобиль</span></span><span class="engine-check"></span></span></label>
+            <label class="choice engine-choice"><input type="radio" name="engine" value="series-hybrid"><span class="choice-body"><span class="engine-copy"><span class="engine-title">Последовательный гибрид</span><span class="engine-desc">Электродвигатель приводит автомобиль в движение</span></span><span class="engine-check"></span></span></label>
+          </div>
+        </fieldset>
+        <div class="field volume-field" id="engine-volume-field" hidden>
+          <label for="engine-volume" class="field-label">Объём двигателя</label>
+          <div class="input-wrap"><input type="text" inputmode="numeric" id="engine-volume" autocomplete="off" class="number-input" placeholder="2 000"><span class="unit">см³</span></div>
+        </div>
+        <div class="benefit-options">
+          <label class="benefit" id="quota-option" hidden>
+            <span class="benefit-copy"><span class="benefit-title">Растаможка по квоте</span><span class="benefit-desc">Таможенная пошлина 0%</span></span>
+            <span class="toggle"><input id="quota" type="checkbox"><span class="toggle-track"></span></span>
+          </label>
+          <label class="benefit" id="benefit-option">
+            <span class="benefit-copy"><span id="benefit-title" class="benefit-title">Льготная растаможка</span><span id="benefit-desc" class="benefit-desc">Указ №140</span></span>
+            <span class="toggle"><input id="benefit" type="checkbox"><span class="toggle-track"></span></span>
+          </label>
+        </div>
+        <div class="customs-details" aria-label="Детализация растаможки">
+          <div class="customs-details-title"><span>Таможенные платежи</span><span style="color:#aba3c9;font-size:11px;font-weight:550;">Расчёт</span></div>
+          <div class="customs-detail-line"><span>Таможенная пошлина</span><strong id="customs-duty">—</strong></div>
+          <div class="customs-detail-line" id="customs-vat-row"><span>НДС</span><strong id="customs-vat">—</strong></div>
+          <div class="customs-detail-line"><span>Таможенный сбор</span><strong id="customs-fee">—</strong></div>
+          <div class="customs-detail-line"><span>Утилизационный сбор</span><strong id="customs-recycling">625 BYN</strong></div>
+          <div class="customs-detail-line"><span>Расходы на СВХ</span><strong id="customs-storage">700 BYN</strong></div>
+          <div class="customs-detail-line emphasis"><span>Итого растаможка</span><div><strong id="customs-total">—</strong><small class="customs-detail-byn" id="customs-total-byn">Ожидание расчёта</small></div></div>
+        </div>
+        <hr class="divider">
+        <div class="section-heading"><h2>Услуги компании</h2><span class="section-number">06</span></div>
+        <div class="field final-field">
+          <label for="company-services" class="field-label">06. Услуги компании</label>
+          <div class="input-wrap"><input class="number-input" id="company-services" type="text" inputmode="decimal" autocomplete="off" placeholder="800"><span class="unit">USD</span></div>
+        </div>
+        <div class="form-end"><button class="reset-btn" type="button" id="reset-all">Сбросить значения</button></div>
+      </section>
+      <aside class="panel result-panel" aria-live="polite" aria-atomic="false">
+        <span class="result-overline">ВАШ РАСЧЁТ</span>
+        <h2>Стоимость под ключ</h2>
+        <div class="result-line"><div><span>Автомобиль</span></div><strong id="summary-car">—</strong></div>
+        <div class="result-line"><div><span>Расходы по Китаю</span></div><strong id="summary-china">—</strong></div>
+        <div class="result-line"><div><span>Доставка Хоргос — Минск</span></div><strong id="summary-delivery">—</strong></div>
+        <div class="result-line"><div><span>Перевод</span><small id="summary-transfer-caption">Процент не указан</small></div><strong id="summary-transfer">—</strong></div>
+        <div class="result-line"><div><span>Растаможка</span><small>По курсу НБРБ</small></div><strong id="summary-customs">—</strong></div>
+        <div class="result-line"><div><span>Услуги компании</span></div><strong id="summary-company">—</strong></div>
+        <div class="result-total"><span class="result-total-label">Итого</span><strong id="summary-total" class="result-total-amount">—</strong><small class="result-total-note" id="summary-total-note">Заполните стоимость автомобиля для расчёта</small></div>
+        <p class="disclaimer">Предварительный расчёт. Итоговая сумма зависит от параметров автомобиля и курса НБРБ. Тарифы растаможки перенесены без изменений из предоставленного файла.</p>
+      </aside>
+    </div>
+    <section class="rates-section" aria-label="Курсы валют">
+      <div class="rates-header">
+        <div class="rates-label">Курс НБРБ <em id="rates-caption">Загружаем курсы...</em></div>
+        <div class="rates-right">
+          <div class="rate">USD <b id="rate-usd">—</b></div>
+          <div class="rate">EUR <b id="rate-eur">—</b></div>
+          <button type="button" id="toggle-manual" class="rates-link" aria-expanded="false">Ввести курсы вручную</button>
+        </div>
+      </div>
+      <div id="manual-rates" class="manual-rates" hidden>
+        <p>Если НБРБ недоступен, можно указать курс самостоятельно. Значения — BYN за 1 USD и 1 EUR.</p>
+        <div class="manual-grid">
+          <div><label for="manual-usd">1 USD в BYN</label><input type="text" id="manual-usd" inputmode="decimal" placeholder="Например, 3,2000"></div>
+          <div><label for="manual-eur">1 EUR в BYN</label><input type="text" id="manual-eur" inputmode="decimal" placeholder="Например, 3,7000"></div>
+          <button type="button" id="apply-manual">Применить курсы</button>
+        </div>
+        <p class="rate-feedback" id="rate-feedback" role="status" hidden></p>
+      </div>
+    </section>
+  </main>
+  <script>
+  (() => {
+    'use strict';
+
+    // Ставки растаможки и порядок вычислений ниже повторяют предоставленный
+    // пользователем customs-calculator-rb-v6.html. Отдельного поля таможенной
+    // стоимости нет: для расчёта используется цена автомобиля из поля 01.
+    const CACHE_KEY = 'ariva-nbrb-rates-v1';
+    const byId = id => document.getElementById(id);
+    const $ = selector => document.querySelector(selector);
+    const money = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
+    const money2 = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const ratesFmt = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+    const nodes = {
+      car: byId('car-price'), china: byId('china-costs'), delivery: byId('khorgos-delivery'), transfer: byId('transfer-percent'),
+      company: byId('company-services'), volume: byId('engine-volume'), benefit: byId('benefit'), quota: byId('quota'),
+      manualUSD: byId('manual-usd'), manualEUR: byId('manual-eur')
+    };
+    let usdToByn = null, eurToByn = null, ratesDate = '', rateSource = '';
+    const formatUSD = n => money.format(n) + ' USD';
+    const formatEUR = n => money2.format(n) + ' €';
+    const formatBYN = n => money2.format(n) + ' BYN';
+    const rawNumber = value => String(value ?? '').replace(/[\s\u00A0\u202F]/g, '').replace(',', '.').replace(/[^\d.]/g, '');
+    const parseNumber = input => {
+      const normalized = rawNumber(input.value);
+      const match = normalized.match(/^\d+(?:\.\d*)?/);
+      const value = match ? Number(match[0]) : 0;
+      return Number.isFinite(value) ? Math.max(0, value) : 0;
+    };
+    const moneyField = input => input.value.trim() !== '' ? formatUSD(parseNumber(input)) : '—';
+    const ageValue = () => $('input[name="age"]:checked').value;
+    const engineValue = () => $('input[name="engine"]:checked').value;
+    const hasRates = () => Number.isFinite(usdToByn) && usdToByn > 0 && Number.isFinite(eurToByn) && eurToByn > 0;
+
+    // Тарифы ДВС / параллельного гибрида — сохранены из исходного файла.
+    function getIceDutyEUR(priceEUR, volumeCc, age) {
+      if (!priceEUR || !volumeCc) return 0;
+      if (age === 'under-3') {
+        let percent = 0, minRatePerCc = 0;
+        if (priceEUR <= 8500) { percent = 0.54; minRatePerCc = 2.5; }
+        else if (priceEUR <= 16700) { percent = 0.48; minRatePerCc = 3.5; }
+        else if (priceEUR <= 42300) { percent = 0.48; minRatePerCc = 5.5; }
+        else if (priceEUR <= 84500) { percent = 0.48; minRatePerCc = 7.5; }
+        else if (priceEUR <= 169000) { percent = 0.48; minRatePerCc = 15; }
+        else { percent = 0.48; minRatePerCc = 20; }
+        return Math.max(priceEUR * percent, volumeCc * minRatePerCc);
+      }
+      if (age === '3-5') {
+        let ratePerCc;
+        if (volumeCc <= 1000) ratePerCc = 1.5;
+        else if (volumeCc <= 1500) ratePerCc = 1.7;
+        else if (volumeCc <= 1800) ratePerCc = 2.5;
+        else if (volumeCc <= 2300) ratePerCc = 2.7;
+        else if (volumeCc <= 3000) ratePerCc = 3.0;
+        else ratePerCc = 3.6;
+        return volumeCc * ratePerCc;
+      }
+      let ratePerCc;
+      if (volumeCc <= 1000) ratePerCc = 3.0;
+      else if (volumeCc <= 1500) ratePerCc = 3.2;
+      else if (volumeCc <= 1800) ratePerCc = 3.5;
+      else if (volumeCc <= 2300) ratePerCc = 4.8;
+      else if (volumeCc <= 3000) ratePerCc = 5.0;
+      else ratePerCc = 5.7;
+      return volumeCc * ratePerCc;
+    }
+    function calculateCustoms() {
+      const age = ageValue(), engine = engineValue(), benefit = nodes.benefit.checked;
+      const quota = engine === 'electric' && nodes.quota.checked;
+      const carUSD = parseNumber(nodes.car);
+      const volumeCC = parseNumber(nodes.volume);
+      const recyclingBYN = age === 'under-3' ? 625 : 1282;
+      const storageBYN = 700;
+      const isComplete = carUSD > 0 && hasRates() && (engine !== 'ice' || volumeCC > 0);
+      let dutyEUR = 0, vatEUR = 0, customsFeeBYN = 0;
+      let totalBYN = 0, totalUSD = 0;
+      if (isComplete) {
+        const priceEUR = carUSD * usdToByn / eurToByn;
+        if (engine === 'series-hybrid') {
+          const fullDutyEUR = priceEUR * 0.15;
+          const fullVatEUR = (priceEUR + fullDutyEUR) * 0.20;
+          dutyEUR = benefit ? fullDutyEUR / 2 : fullDutyEUR;
+          vatEUR = benefit ? fullVatEUR / 2 : fullVatEUR;
+        } else if (engine === 'electric') {
+          dutyEUR = quota ? 0 : priceEUR * 0.15 * (benefit ? 0.5 : 1);
+          vatEUR = age === 'over-5' ? (priceEUR + dutyEUR) * 0.20 : 0;
+        } else {
+          dutyEUR = getIceDutyEUR(priceEUR, volumeCC, age);
+          if (benefit) dutyEUR *= 0.5;
+        }
+        customsFeeBYN = dutyEUR > 0 ? 120 : 0;
+        totalBYN = (dutyEUR + vatEUR) * eurToByn + customsFeeBYN + recyclingBYN + storageBYN;
+        totalUSD = totalBYN / usdToByn;
+      }
+      return { isComplete, age, engine, recyclingBYN, storageBYN, dutyEUR, vatEUR, customsFeeBYN, totalBYN, totalUSD };
+    }
+    function render() {
+      const engine = engineValue();
+      const age = ageValue();
+      byId('engine-volume-field').hidden = engine !== 'ice';
+      const isElectric = engine === 'electric';
+      byId('quota-option').hidden = !isElectric;
+      // Квота доступна только для электро. При ней пошлина равна нулю,
+      // поэтому скидка 50% на пошлину не применяется.
+      if (!isElectric) nodes.quota.checked = false;
+      if (isElectric && nodes.quota.checked) nodes.benefit.checked = false;
+      nodes.benefit.disabled = isElectric && nodes.quota.checked;
+      byId('benefit-option').classList.toggle('is-disabled', nodes.benefit.disabled);
+      byId('benefit-desc').textContent = nodes.benefit.disabled
+        ? 'Недоступна при включённой квоте'
+        : isElectric ? 'Скидка 50% на таможенную пошлину · Указ №140' : 'Указ №140';
+      byId('customs-vat-row').hidden = !(engine === 'series-hybrid' || (engine === 'electric' && age === 'over-5'));
+
+      const carUSD = parseNumber(nodes.car);
+      const chinaUSD = parseNumber(nodes.china);
+      const deliveryUSD = parseNumber(nodes.delivery);
+      const transferPercent = parseNumber(nodes.transfer);
+      const servicesUSD = parseNumber(nodes.company);
+      const transferUSD = (carUSD + chinaUSD + deliveryUSD) * transferPercent / 100;
+      const customs = calculateCustoms();
+
+      byId('customs-recycling').textContent = formatBYN(customs.recyclingBYN);
+      byId('customs-storage').textContent = formatBYN(customs.storageBYN);
+      byId('customs-duty').textContent = customs.isComplete ? formatEUR(customs.dutyEUR) : '—';
+      byId('customs-vat').textContent = customs.isComplete ? formatEUR(customs.vatEUR) : '—';
+      byId('customs-fee').textContent = customs.isComplete ? formatBYN(customs.customsFeeBYN) : '—';
+      byId('customs-total').textContent = customs.isComplete ? '≈ ' + formatUSD(customs.totalUSD) : '—';
+      byId('customs-total-byn').textContent = customs.isComplete ? formatBYN(customs.totalBYN) : 'Ожидание расчёта';
+
+      byId('summary-car').textContent = moneyField(nodes.car);
+      byId('summary-china').textContent = moneyField(nodes.china);
+      byId('summary-delivery').textContent = moneyField(nodes.delivery);
+      byId('summary-transfer-caption').textContent = nodes.transfer.value.trim() === '' ? 'Процент не указан' : money.format(transferPercent) + '% от авто, расходов по Китаю и доставки';
+      byId('summary-transfer').textContent = nodes.transfer.value.trim() === '' ? '—' : formatUSD(transferUSD);
+      byId('summary-customs').textContent = customs.isComplete ? formatUSD(customs.totalUSD) : '—';
+      byId('summary-company').textContent = moneyField(nodes.company);
+
+      let message = '';
+      let totalText = '—';
+      if (carUSD <= 0) message = 'Укажите стоимость автомобиля';
+      else if (!hasRates()) message = 'Не удалось получить курсы НБРБ. Можно указать их вручную ниже.';
+      else if (engine === 'ice' && parseNumber(nodes.volume) <= 0) message = 'Укажите объём двигателя для расчёта растаможки';
+      else {
+        const grandTotal = carUSD + chinaUSD + deliveryUSD + transferUSD + customs.totalUSD + servicesUSD;
+        totalText = formatUSD(grandTotal);
+        message = 'Расчёт включает автомобиль, расходы по Китаю, доставку, перевод, растаможку и услуги';
+      }
+      byId('summary-total').textContent = totalText;
+      byId('summary-total-note').textContent = message;
+    }
+
+    function updateRatesDisplay() {
+      byId('rate-usd').textContent = hasRates() ? ratesFmt.format(usdToByn) + ' BYN' : '—';
+      byId('rate-eur').textContent = hasRates() ? ratesFmt.format(eurToByn) + ' BYN' : '—';
+      let caption = 'Курсы недоступны';
+      if (hasRates()) {
+        const formattedDate = ratesDate ? new Date(ratesDate) : null;
+        const dateStr = formattedDate && !Number.isNaN(formattedDate.getTime()) ? formattedDate.toLocaleDateString('ru-RU') : ratesDate;
+        const prefix = rateSource === 'cache' ? 'Сохранённые курсы' : rateSource === 'manual' ? 'Указаны вручную' : 'Актуальные курсы';
+        caption = prefix + (dateStr ? ' · ' + dateStr : '');
+      }
+      byId('rates-caption').textContent = caption;
+      render();
+    }
+    function setRates(usd, eur, date, source) {
+      if (!(usd > 0 && eur > 0 && Number.isFinite(usd) && Number.isFinite(eur))) return;
+      usdToByn = usd;
+      eurToByn = eur;
+      ratesDate = date;
+      rateSource = source;
+      updateRatesDisplay();
+    }
+    function cachedRates() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+        if (saved && Number(saved.usd) > 0 && Number(saved.eur) > 0) return saved;
+      } catch (err) { /* Локальное хранилище может быть недоступно */ }
+      return null;
+    }
+    function cacheRates(usd, eur, date) {
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify({usd, eur, date})); } catch (err) { /* необязательный кэш */ }
+    }
+    async function loadRates() {
+      const cached = cachedRates();
+      if (cached) setRates(Number(cached.usd), Number(cached.eur), cached.date || '', 'cache');
+      try {
+        // period=0: дневные курсы НБРБ; делим на Cur_Scale (обычно 1).
+        const response = await fetch('https://api.nbrb.by/exrates/rates?periodicity=0', {cache:'no-store'});
+        if (!response.ok) throw new Error('Ошибка HTTP ' + response.status);
+        const data = await response.json();
+        const usd = data.find(item => item.Cur_Abbreviation === 'USD');
+        const eur = data.find(item => item.Cur_Abbreviation === 'EUR');
+        if (!usd || !eur) throw new Error('В ответе НБРБ нет USD или EUR');
+        const currentUSD = Number(usd.Cur_OfficialRate) / Number(usd.Cur_Scale);
+        const currentEUR = Number(eur.Cur_OfficialRate) / Number(eur.Cur_Scale);
+        if (!(currentUSD > 0 && currentEUR > 0)) throw new Error('Неверный курс');
+        cacheRates(currentUSD, currentEUR, usd.Date || eur.Date || '');
+        // Если пользователь ввёл курсы вручную, не заменяем их поздним ответом API.
+        if (rateSource !== 'manual') setRates(currentUSD, currentEUR, usd.Date || eur.Date || '', 'live');
+      } catch (error) {
+        if (!hasRates()) updateRatesDisplay();
+        else if (rateSource === 'cache') byId('rates-caption').textContent += ' · НБРБ недоступен';
+      }
+    }
+
+    // Красивое форматирование денежных полей происходит после завершения ввода;
+    // запятая и точка в процентах поддерживаются без потери десятичной части.
+    function bindNumericField(input, digits = 2) {
+      input.addEventListener('input', render);
+      input.addEventListener('blur', () => {
+        if (input.value.trim()) {
+          const val = parseNumber(input);
+          input.value = new Intl.NumberFormat('ru-RU', {maximumFractionDigits: digits}).format(val);
+        }
+        render();
+      });
+    }
+    bindNumericField(nodes.car);
+    bindNumericField(nodes.china);
+    bindNumericField(nodes.delivery);
+    bindNumericField(nodes.transfer, 3);
+    bindNumericField(nodes.company);
+    bindNumericField(nodes.volume, 0);
+    document.querySelectorAll('input[name="age"], input[name="engine"], #benefit, #quota').forEach(el => el.addEventListener('change', render));
+    byId('reset-all').addEventListener('click', () => {
+      [nodes.car, nodes.china, nodes.delivery, nodes.transfer, nodes.company, nodes.volume].forEach(el => { el.value = ''; });
+      $('input[name="age"][value="under-3"]').checked = true;
+      $('input[name="engine"][value="ice"]').checked = true;
+      nodes.benefit.checked = false;
+      nodes.quota.checked = false;
+      render();
+      nodes.car.focus();
+    });
+    byId('toggle-manual').addEventListener('click', () => {
+      const el = byId('manual-rates');
+      el.hidden = !el.hidden;
+      byId('toggle-manual').setAttribute('aria-expanded', String(!el.hidden));
+      if (!el.hidden && hasRates()) {
+        nodes.manualUSD.value = String(usdToByn).replace('.', ',');
+        nodes.manualEUR.value = String(eurToByn).replace('.', ',');
+      }
+    });
+    byId('apply-manual').addEventListener('click', () => {
+      const usd = parseNumber(nodes.manualUSD), eur = parseNumber(nodes.manualEUR);
+      if (!usd || !eur) {
+        byId('rate-feedback').hidden = false;
+        byId('rate-feedback').textContent = 'Укажите положительные значения USD и EUR.';
+        return;
+      }
+      byId('rate-feedback').hidden = true;
+      setRates(usd, eur, '', 'manual');
+    });
+    render();
+    loadRates();
+  })();
+  </script>
+</body>
+</html>
